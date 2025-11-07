@@ -83,15 +83,15 @@ pub const DEFAULT_YT_CLIENT: YtClient = YtClient::Web;
 pub const PREFERRED_LOCALE: &str = "en";
 pub const YT_URL: &str = "https://www.youtube.com";
 
-pub const STREAMING_DATA_CLIENT_NAME: &str = "__yt_dlp_client";
-pub const STREAMING_DATA_FETCH_SUBS_PO_TOKEN: &str = "__yt_dlp_fetch_subs_po_token";
-pub const STREAMING_DATA_FETCH_GVS_PO_TOKEN: &str = "__yt_dlp_fetch_gvs_po_token";
-pub const STREAMING_DATA_PLAYER_TOKEN_PROVIDED: &str = "__yt_dlp_player_token_provided";
-pub const STREAMING_DATA_INNERTUBE_CONTEXT: &str = "__yt_dlp_innertube_context";
-pub const STREAMING_DATA_IS_PREMIUM_SUBSCRIBER: &str = "__yt_dlp_is_premium_subscriber";
-pub const STREAMING_DATA_FETCHED_TIMESTAMP: &str = "__yt_dlp_fetched_timestamp";
-pub const DEFAULT_PLAYER_JS_VERSION: &str = "actual";
-pub const DEFAULT_PLAYER_JS_VARIANT: &str = "main";
+// pub const STREAMING_DATA_CLIENT_NAME: &str = "__yt_dlp_client";
+// pub const STREAMING_DATA_FETCH_SUBS_PO_TOKEN: &str = "__yt_dlp_fetch_subs_po_token";
+// pub const STREAMING_DATA_FETCH_GVS_PO_TOKEN: &str = "__yt_dlp_fetch_gvs_po_token";
+// pub const STREAMING_DATA_PLAYER_TOKEN_PROVIDED: &str = "__yt_dlp_player_token_provided";
+// pub const STREAMING_DATA_INNERTUBE_CONTEXT: &str = "__yt_dlp_innertube_context";
+// pub const STREAMING_DATA_IS_PREMIUM_SUBSCRIBER: &str = "__yt_dlp_is_premium_subscriber";
+// pub const STREAMING_DATA_FETCHED_TIMESTAMP: &str = "__yt_dlp_fetched_timestamp";
+// pub const DEFAULT_PLAYER_JS_VERSION: &str = "actual";
+// pub const DEFAULT_PLAYER_JS_VARIANT: &str = "main";
 
 pub const PLAYER_JS_MAIN_VARIANT: &str = "player_ias.vflset/en_US/base.js";
 // pub const PLAYER_JS_INVERSE_MAIN_VARIANT: &str = "main";

@@ -10,32 +10,6 @@ pub enum StreamingProtocol {
     Hls,
 }
 
-impl StreamingProtocol {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Https => "https",
-            Self::Dash => "dash",
-            Self::Hls => "hls",
-        }
-    }
-}
-
-pub enum PoTokenContext {
-    Player,
-    Gvs,
-    Subs,
-}
-
-impl PoTokenContext {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Player => "player",
-            Self::Gvs => "gvs",
-            Self::Subs => "subs",
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct GvsPoTokenPolicy {
     pub required: bool,

@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::collections::HashMap;
 
 use anyhow::{Result, anyhow};
 use fancy_regex::Regex;
@@ -15,7 +12,6 @@ use crate::extractor::{
     download::ExtractorDownloadHandle,
     extract::{InfoExtractor, YtExtractor},
     json::ExtractorJsonHandle,
-    token_policy::PlayerPoTokenPolicy,
     yt_interface::{
         PLAYER_JS_MAIN_VARIANT, PlayerIdentifier, VideoId, YT_URL, YtClient, YtEndpoint,
     },
@@ -54,7 +50,6 @@ pub trait ExtractorPlayerHandle {
         initial_pr: &HashMap<String, Value>,
         visitor_data: &Option<String>,
         data_sync_id: &Option<String>,
-        po_token: Option<String>,
     ) -> Result<HashMap<String, Value>>;
     async fn extract_player_responses(
         &mut self,
@@ -286,7 +281,6 @@ impl ExtractorPlayerHandle for YtExtractor {
         initial_pr: &HashMap<String, Value>,
         visitor_data: &Option<String>,
         data_sync_id: &Option<String>,
-        po_token: Option<String>,
     ) -> Result<HashMap<String, Value>> {
         let (parsed_data_sync_id, parsed_user_session_id) =
             self.parse_data_sync_id(data_sync_id.clone().unwrap_or_default());
@@ -304,15 +298,6 @@ impl ExtractorPlayerHandle for YtExtractor {
         let parsed_session_index = self.get_session_index(&[webpage_ytcfg, player_ytcfg]);
         let mut yt_query: HashMap<String, Value> = HashMap::new();
         yt_query.insert("videoId".into(), video_id.as_str().into());
-
-        if let Some(po_tok) = po_token {
-            yt_query.insert(
-                "serviceIntegrityDimensions".into(),
-                json!({
-                  "poToken": po_tok
-                }),
-            );
-        }
 
         let sts = self
             .extract_signature_timestamp(
@@ -385,7 +370,6 @@ impl ExtractorPlayerHandle for YtExtractor {
         while !actual_clients.is_empty() {
             let popped_client = actual_clients.pop().unwrap();
             let client = popped_client.as_str();
-            let base_client = popped_client.get_base();
             let variant = popped_client.get_variant();
 
             let player_ytcfg: &HashMap<String, Value> = if client == webpage_client.as_str() {
@@ -449,12 +433,6 @@ impl ExtractorPlayerHandle for YtExtractor {
                 .collect(),
             );
 
-            let player_pot_policy = self
-                .select_default_ytcfg(Some(&popped_client))?
-                .player_po_token_policy;
-
-            let player_po_token: Option<String> = None;
-
             let player_response = self
                 .extract_player_response(
                     &popped_client,
@@ -469,7 +447,6 @@ impl ExtractorPlayerHandle for YtExtractor {
                     &initial_pr,
                     &visitor_data,
                     &data_sync_id,
-                    player_po_token,
                 )
                 .await?;
 
