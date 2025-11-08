@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use anyhow::{Result, anyhow};
-use reqwest::Url;
 use serde_json::Value;
 
 use crate::{
+    cookies::CookieStore,
     extractor::{
         cookies::ExtractorCookieHandle,
         extract::YtExtractor,
@@ -66,9 +66,7 @@ impl ExtractorAuthHandle for YtExtractor {
             }
         }
 
-        // #[cfg(not(target_arch = "wasm32"))]
-        self.cookie_jar
-            .add_cookie_str("SOCS=CAI", &Url::parse(YT_URL)?);
+        self.cookie_jar.set(YT_URL, "SOCS", "CAI")?;
         Ok(())
     }
 
@@ -88,15 +86,12 @@ impl ExtractorAuthHandle for YtExtractor {
 
         let pref_qs = convert_to_query_string(&pref);
 
-        // #[cfg(not(target_arch = "wasm32"))]
-        self.cookie_jar
-            .add_cookie_str(format!("PREF={}", pref_qs).as_str(), &Url::parse(YT_URL)?);
-
+        self.cookie_jar.set(YT_URL, "PREF", pref_qs.as_str())?;
         Ok(())
     }
 
     fn is_authenticated(&self) -> Result<bool> {
-        return self.has_auth_cookies();
+        self.has_auth_cookies()
     }
 
     fn has_auth_cookies(&self) -> Result<bool> {
@@ -200,11 +195,11 @@ impl ExtractorAuthHandle for YtExtractor {
     ) -> Result<HashMap<&str, String>> {
         let mut headers = HashMap::new();
 
-        let mut delegated_sess_id = delegated_session_id;
-
-        if delegated_sess_id.is_none() {
-            delegated_sess_id = self.get_delegated_session_id(&[&ytcfg]);
-        }
+        let delegated_sess_id = if delegated_session_id.is_none() {
+            self.get_delegated_session_id(&[&ytcfg])
+        } else {
+            None
+        };
 
         if let Some(delegated_s_id) = delegated_sess_id.clone() {
             headers.insert("X-Goog-PageId", delegated_s_id);

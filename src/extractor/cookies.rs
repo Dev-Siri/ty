@@ -4,13 +4,13 @@ use std::{
 };
 
 use anyhow::Result;
-// #[cfg(not(target_arch = "wasm32"))]
-use reqwest::{Url, cookie::CookieStore};
-// #[cfg(target_arch = "wasm32")]
-// use reqwest::{Url, header::HeaderValue};
 use sha1::{Digest, Sha1};
 
-use crate::{extractor::extract::YtExtractor, yt_interface::YT_URL};
+use crate::{
+    cookies::{CookieStore, Cookies},
+    extractor::extract::YtExtractor,
+    yt_interface::YT_URL,
+};
 
 pub struct SidCookies {
     pub yt_sapisid: Option<String>,
@@ -32,8 +32,8 @@ impl SidCookies {
     }
 }
 pub trait ExtractorCookieHandle {
-    fn get_cookies(&self, url: &str) -> Result<HashMap<String, String>>;
-    fn get_youtube_cookies(&self) -> Result<HashMap<String, String>>;
+    fn get_cookies(&self, url: &str) -> Result<Cookies>;
+    fn get_youtube_cookies(&self) -> Result<Cookies>;
     /// Get SAPISID, 1PSAPISID, 3PSAPISID cookie values.
     fn get_sid_cookies(&self) -> Result<SidCookies>;
     fn make_sid_authorization(
@@ -52,30 +52,12 @@ pub trait ExtractorCookieHandle {
 }
 
 impl ExtractorCookieHandle for YtExtractor {
-    fn get_cookies(&self, url: &str) -> Result<HashMap<String, String>> {
-        // #[cfg(not(target_arch = "wasm32"))]
-        let url = Url::parse(url)?;
-        // #[cfg(not(target_arch = "wasm32"))]
-        let cookies = self.cookie_jar.cookies(&url);
-        // #[cfg(target_arch = "wasm32")]
-        // let cookies: Option<HeaderValue> = None;
-        let cookies_str = match cookies {
-            Some(cookie_val) => cookie_val.to_str()?.to_owned(),
-            None => String::new(),
-        };
-
-        let cookies_map: HashMap<String, String> = cookies_str
-            .split("; ")
-            .filter_map(|pair| {
-                let mut parts = pair.splitn(2, '=');
-                Some((parts.next()?.to_string(), parts.next()?.to_string()))
-            })
-            .collect();
-
-        Ok(cookies_map)
+    fn get_cookies(&self, url: &str) -> Result<Cookies> {
+        let cookies = self.cookie_jar.get_all(url)?.unwrap_or_default();
+        Ok(cookies)
     }
 
-    fn get_youtube_cookies(&self) -> Result<HashMap<String, String>> {
+    fn get_youtube_cookies(&self) -> Result<Cookies> {
         self.get_cookies(YT_URL)
     }
 

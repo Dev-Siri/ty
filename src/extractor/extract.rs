@@ -5,11 +5,10 @@ use std::{
 
 use anyhow::{Result, anyhow};
 use fancy_regex::Regex;
-// #[cfg(not(target_arch = "wasm32"))]
-use reqwest::cookie;
 use serde_json::Value;
 
 use crate::{
+    cookies::CookieJar,
     extractor::{
         auth::ExtractorAuthHandle, client::INNERTUBE_CLIENTS, download::ExtractorDownloadHandle,
         json::ExtractorJsonHandle, player::ExtractorPlayerHandle, ytcfg::ExtractorYtCfgHandle,
@@ -21,7 +20,7 @@ pub struct YtExtractor {
     pub passed_auth_cookies: Cell<bool>,
     pub http_client: reqwest::Client,
     // #[cfg(not(target_arch = "wasm32"))]
-    pub cookie_jar: cookie::Jar,
+    pub cookie_jar: CookieJar,
     pub code_cache: HashMap<String, String>,
     pub player_cache: HashMap<(String, String), String>,
 }
@@ -51,7 +50,7 @@ impl YtExtractor {
             passed_auth_cookies: Cell::new(false),
             http_client: reqwest::Client::new(),
             // #[cfg(not(target_arch = "wasm32"))]
-            cookie_jar: cookie::Jar::default(),
+            cookie_jar: CookieJar::new(),
             code_cache: HashMap::new(),
             player_cache: HashMap::new(),
             // x_forwarded_for_ip: None,
