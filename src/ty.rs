@@ -8,7 +8,7 @@ use std::{
 
 use crate::cache::CacheStore;
 use crate::cipher::decipher::{SignatureDecipher, SignatureDecipherHandle};
-use crate::yt_interface::YtStreamResponse;
+use crate::yt_interface::{YtManifest, YtStreamResponse, YtVideoInfo};
 use crate::{
     extractor::extract::{InfoExtractor, YtExtractor},
     yt_interface::VideoId,
@@ -35,6 +35,20 @@ impl Ty {
 }
 
 pub trait Extract {
+    /// Extract the raw JSON manifest from YouTube's API.
+    fn get_manifest<'a>(&'a self, video_id: &'a VideoId) -> Self::ExtractManifestFut<'a>;
+    /// Extract metadata of a video from YouTube.
+    fn get_video_info<'a>(&'a self, video_id: &'a VideoId) -> Self::ExtractInfoFut<'a>;
+    /// Fetch and parse general video information (metadata) from an already fetched manifest.
+    fn get_video_info_from_manifest<'a>(
+        &'a self,
+        manifest: &'a YtManifest,
+    ) -> Self::ExtractInfoFut<'a>;
+    /// Fetch and parse the streams from an already fetched manifest.
+    fn get_streams_from_manifest<'a>(
+        &'a self,
+        manifest: &'a YtManifest,
+    ) -> Self::ExtractStreamFut<'a>;
     type DecipherFut<'a>: Future<Output = Result<String>> + 'a
     where
         Self: 'a;
@@ -44,24 +58,78 @@ pub trait Extract {
         signature: String,
         player_url: String,
     ) -> Self::DecipherFut<'a>;
-    type ExtractFut<'a>: Future<Output = Result<YtStreamResponse>> + 'a
+    /// Extract playable streams from YouTube and get their source either as a `Signature` or an `URL`
+    fn get_streams<'a>(&'a self, video_id: &'a VideoId) -> Self::ExtractStreamFut<'a>;
+    type ExtractStreamFut<'a>: Future<Output = Result<YtStreamResponse>> + 'a
     where
         Self: 'a;
-    /// Extract playable streams from YouTube and get their source either as a `Signature` or an `URL`
-    fn get_streams<'a>(&'a self, video_id: &'a VideoId) -> Self::ExtractFut<'a>;
+    type ExtractInfoFut<'a>: Future<Output = Result<YtVideoInfo>> + 'a
+    where
+        Self: 'a;
+    type ExtractManifestFut<'a>: Future<Output = Result<YtManifest>> + 'a
+    where
+        Self: 'a;
 }
 
 impl Extract for Ty {
+    type ExtractStreamFut<'a> = Pin<Box<dyn Future<Output = Result<YtStreamResponse>> + 'a>>;
     type DecipherFut<'a> = Pin<Box<dyn Future<Output = Result<String>> + 'a>>;
-    type ExtractFut<'a> = Pin<Box<dyn Future<Output = Result<YtStreamResponse>> + 'a>>;
+    type ExtractInfoFut<'a> = Pin<Box<dyn Future<Output = Result<YtVideoInfo>> + 'a>>;
+    type ExtractManifestFut<'a> = Pin<Box<dyn Future<Output = Result<YtManifest>> + 'a>>;
 
-    fn get_streams<'a>(&'a self, video_id: &'a VideoId) -> Self::ExtractFut<'a> {
+    fn get_streams<'a>(&'a self, video_id: &'a VideoId) -> Self::ExtractStreamFut<'a> {
         Box::pin(async move {
-            let mut extractor = self
+            let extractor = self
                 .yt_extractor
                 .lock()
                 .map_err(|e| anyhow!(e.to_string()))?;
             extractor.extract_streams(video_id).await
+        })
+    }
+
+    fn get_manifest<'a>(&'a self, video_id: &'a VideoId) -> Self::ExtractManifestFut<'a> {
+        Box::pin(async move {
+            let extractor = self
+                .yt_extractor
+                .lock()
+                .map_err(|e| anyhow!(e.to_string()))?;
+            extractor.extract_manifest(video_id).await
+        })
+    }
+
+    fn get_video_info<'a>(&'a self, video_id: &'a VideoId) -> Self::ExtractInfoFut<'a> {
+        Box::pin(async move {
+            let extractor = self
+                .yt_extractor
+                .lock()
+                .map_err(|e| anyhow!(e.to_string()))?;
+            extractor.extract_video_info(video_id).await
+        })
+    }
+
+    fn get_streams_from_manifest<'a>(
+        &'a self,
+        manifest: &'a YtManifest,
+    ) -> Self::ExtractStreamFut<'a> {
+        Box::pin(async move {
+            let extractor = self
+                .yt_extractor
+                .lock()
+                .map_err(|e| anyhow!(e.to_string()))?;
+            extractor.extract_streams_from_manifest(manifest).await
+        })
+    }
+
+    fn get_video_info_from_manifest<'a>(
+        &'a self,
+        manifest: &'a YtManifest,
+    ) -> Self::ExtractInfoFut<'a> {
+        Box::pin(async move {
+            let extractor = self
+                .yt_extractor
+                .lock()
+                .map_err(|e| anyhow!(e.to_string()))?;
+            extractor.extract_video_info_from_manifest(manifest).await
         })
     }
 

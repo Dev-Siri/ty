@@ -1,7 +1,7 @@
 use core::fmt;
 use std::{collections::HashMap, str::FromStr};
 
-use anyhow::{Result, anyhow};
+use anyhow::{Result, anyhow, bail};
 use serde_json::Value;
 
 #[derive(Debug)]
@@ -186,6 +186,31 @@ impl fmt::Display for VideoId {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct YtChannel {
+    id: String,
+    name: Option<String>,
+}
+
+impl YtChannel {
+    pub fn new<S: Into<String>>(id: S, name: Option<String>) -> Result<Self> {
+        let id = id.into();
+        if id.starts_with("UC") && id.len() == 24 {
+            Ok(Self { id, name })
+        } else {
+            bail!("Invalid channel ID for Channel: {}", id)
+        }
+    }
+
+    pub fn get_id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn get_url(&self) -> String {
+        format!("{}/channel/{}", YT_URL, self.id)
+    }
+}
+
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum YtStreamSource {
     URL(String),
@@ -233,7 +258,7 @@ pub trait Filterable {
     /// ```
     /// #[tokio::main]
     /// async fn main() -> Result<()> {
-    ///   let ty = Ty::new();
+    ///   let ty = Ty::new()?;
     ///   // Get the stream with the lowest bitrate.
     ///   let video_only = ty
     ///      .fetch_streams(&VideoId::new("dQw4w9WgXcQ")?)
@@ -246,7 +271,7 @@ pub trait Filterable {
     /// ```
     /// #[tokio::main]
     /// async fn main() -> Result<()> {
-    ///   let ty = Ty::new();
+    ///   let ty = Ty::new()?;
     ///   // Get the stream with the lowest bitrate.
     ///   let audio_only = ty
     ///      .fetch_streams(&VideoId::new("dQw4w9WgXcQ")?)
@@ -259,7 +284,7 @@ pub trait Filterable {
     /// ```
     /// #[tokio::main]
     /// async fn main() -> Result<()> {
-    ///   let ty = Ty::new();
+    ///   let ty = Ty::new()?;
     ///   // Get the stream with the lowest bitrate.
     ///   let lowest_br_stream = ty
     ///      .fetch_streams(&VideoId::new("dQw4w9WgXcQ")?)
@@ -273,7 +298,7 @@ pub trait Filterable {
     /// ```
     /// #[tokio::main]
     /// async fn main() -> Result<()> {
-    ///   let ty = Ty::new();
+    ///   let ty = Ty::new()?;
     ///   // Get the stream with the highest bitrate.
     ///   let highest_br_stream = ty
     ///      .fetch_streams(&VideoId::new("dQw4w9WgXcQ")?)
@@ -288,7 +313,7 @@ pub trait Filterable {
     /// ```
     /// #[tokio::main]
     /// async fn main() -> Result<()> {
-    ///   let ty = Ty::new();
+    ///   let ty = Ty::new()?;
     ///   // Get direct URL streams.
     ///   let signature_streams = ty
     ///      .fetch_streams(&VideoId::new("dQw4w9WgXcQ")?)
@@ -301,7 +326,7 @@ pub trait Filterable {
     /// ```
     /// #[tokio::main]
     /// async fn main() -> Result<()> {
-    ///   let ty = Ty::new();
+    ///   let ty = Ty::new()?;
     ///   // Get direct URL streams.
     ///   let url_streams = ty
     ///      .fetch_streams(&VideoId::new("dQw4w9WgXcQ")?)
@@ -411,5 +436,38 @@ impl YtManifest {
     }
 }
 
+#[derive(Debug, Default)]
+pub enum YtMediaType {
+    LiveStream,
+    Short,
+    #[default]
+    Video,
+}
+
+#[derive(Debug, Default)]
+pub enum YtAgeLimit {
+    Adult,
+    #[default]
+    None,
+}
+
 #[derive(Debug)]
-pub struct YtVideoInfo {}
+pub struct YtThumbnail {
+    pub url: String,
+    pub height: Option<u64>,
+    pub width: Option<u64>,
+}
+
+#[derive(Debug)]
+pub struct YtVideoInfo {
+    pub title: String,
+    pub description: String,
+    /// Rounded-off duration of the video in seconds.
+    pub duration: u64,
+    pub view_count: u64,
+    pub channel: YtChannel,
+    pub keywords: Vec<String>,
+    pub thumbnails: Vec<YtThumbnail>,
+    pub media_type: YtMediaType,
+    pub age_limit: YtAgeLimit,
+}

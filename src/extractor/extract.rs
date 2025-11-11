@@ -3,9 +3,9 @@ use std::{
     sync::{Arc, atomic::AtomicBool},
 };
 
-use anyhow::{Result, anyhow};
+use anyhow::{Result, anyhow, bail};
 use fancy_regex::Regex;
-use serde_json::Value;
+use serde_json::{Map, Value};
 
 use crate::{
     cache::CacheStore,
@@ -15,7 +15,8 @@ use crate::{
         json::ExtractorJsonHandle, player::ExtractorPlayerHandle, ytcfg::ExtractorYtCfgHandle,
     },
     yt_interface::{
-        VideoId, YtClient, YtManifest, YtStream, YtStreamResponse, YtStreamSource, YtVideoInfo,
+        VideoId, YtAgeLimit, YtChannel, YtClient, YtManifest, YtMediaType, YtStream,
+        YtStreamResponse, YtStreamSource, YtThumbnail, YtVideoInfo,
     },
 };
 
@@ -28,28 +29,29 @@ pub struct YtExtractor {
 }
 
 pub trait InfoExtractor {
+    async fn extract_video_info_from_manifest(&self, manifest: &YtManifest) -> Result<YtVideoInfo>;
     fn extract_metadata(
         &self,
         player_responses: Vec<HashMap<String, Value>>,
     ) -> Result<YtVideoInfo>;
-    async fn extract_video_info(&mut self, video_id: &VideoId) -> Result<YtVideoInfo>;
+    async fn extract_video_info(&self, video_id: &VideoId) -> Result<YtVideoInfo>;
     async fn extract_streams_from_manifest(
         &self,
         manifest: &YtManifest,
     ) -> Result<YtStreamResponse>;
-    async fn extract_manifest(&mut self, video_id: &VideoId) -> Result<YtManifest>;
+    async fn extract_manifest(&self, video_id: &VideoId) -> Result<YtManifest>;
     fn extract_formats(
         &self,
         player_responses: Vec<HashMap<String, Value>>,
     ) -> Result<Vec<YtStream>>;
-    async fn extract_streams(&mut self, video_id: &VideoId) -> Result<YtStreamResponse>;
+    async fn extract_streams(&self, video_id: &VideoId) -> Result<YtStreamResponse>;
     fn generate_checkok_params(&self) -> HashMap<String, Value>;
     fn is_premium_subscriber(&self, initial_data: &HashMap<String, Value>) -> Result<bool>;
     fn extract_ytcfg(&self, webpage_content: String) -> Result<HashMap<String, Value>>;
     fn extract_yt_initial_data(&self, webpage_content: &String) -> Result<HashMap<String, Value>>;
     fn get_clients(&self, is_premium_subscriber: bool) -> Result<Vec<YtClient>>;
     async fn extract(
-        &mut self,
+        &self,
         webpage_url: &str,
         webpage_client: &YtClient,
         video_id: &VideoId,
@@ -296,13 +298,182 @@ impl InfoExtractor for YtExtractor {
         &self,
         player_responses: Vec<HashMap<String, Value>>,
     ) -> Result<YtVideoInfo> {
-        for player_response in player_responses {}
+        let mut extracted_title: Option<String> = None;
+        let mut extracted_length_seconds: Option<u64> = None;
+        let mut extracted_channel_id: Option<String> = None;
+        let mut extracted_channel_name: Option<String> = None;
+        let mut extracted_keywords: Option<Vec<String>> = None;
+        let mut extracted_media_type: Option<YtMediaType> = None;
+        let mut extracted_view_count: Option<u64> = None;
+        let mut extracted_thumbnails: Vec<YtThumbnail> = vec![];
+        let mut extracted_description: Option<String> = None;
+        let mut extracted_age_limit: Option<YtAgeLimit> = None;
 
-        Ok(YtVideoInfo {})
+        for player_response in player_responses {
+            let Some(vd_value) = player_response.get("videoDetails") else {
+                bail!(
+                    "Could not extract video info (metadata) because YouTube didn't return a `videoDetails` value in response."
+                )
+            };
+
+            let video_details = vd_value.as_object().cloned().unwrap_or(Map::new());
+            let microformats = player_response
+                .get("microformat")
+                .and_then(|mf| mf.get("playerMicroformatRenderer"))
+                .unwrap_or_default()
+                .as_object()
+                .cloned()
+                .unwrap_or(Map::new());
+
+            if extracted_title.is_none() {
+                extracted_title = video_details
+                    .get("title")
+                    .and_then(|s| s.as_str())
+                    .and_then(|s| Some(s.to_string()))
+                    .clone();
+            }
+
+            if extracted_length_seconds.is_none() {
+                extracted_length_seconds = video_details
+                    .get("lengthSeconds")
+                    .and_then(|s| s.as_str())
+                    .and_then(|s| s.parse().ok())
+                    .clone();
+            }
+
+            if extracted_view_count.is_none() {
+                extracted_view_count = video_details
+                    .get("viewCount")
+                    .and_then(|s| s.as_str())
+                    .and_then(|s| s.parse().ok())
+                    .clone();
+            }
+
+            if extracted_channel_id.is_none() {
+                extracted_channel_id = video_details
+                    .get("channelId")
+                    .and_then(|s| s.as_str())
+                    .and_then(|s| s.parse().ok())
+                    .clone();
+            }
+
+            if extracted_keywords.is_none() {
+                extracted_keywords = video_details
+                    .get("keywords")
+                    .and_then(|s| s.as_array())
+                    .and_then(|v| {
+                        Some(
+                            v.iter()
+                                .map(|k| k.as_str().unwrap_or_default().to_string())
+                                .collect(),
+                        )
+                    })
+                    .clone();
+            }
+
+            if extracted_channel_name.is_none() {
+                extracted_channel_name = video_details
+                    .get("author")
+                    .and_then(|s| s.as_str().and_then(|s| Some(s.to_string())))
+                    .clone();
+            }
+
+            if extracted_media_type.is_none() {
+                extracted_media_type = Some(
+                    if video_details
+                        .get("isLiveContent")
+                        .and_then(|isc| isc.as_bool())
+                        .unwrap_or_default()
+                    {
+                        YtMediaType::LiveStream
+                    } else if microformats
+                        .get("isShortsEligible")
+                        .and_then(|ise| ise.as_bool())
+                        .unwrap_or_default()
+                    {
+                        YtMediaType::Short
+                    } else {
+                        YtMediaType::Video
+                    },
+                );
+            }
+
+            if extracted_thumbnails.is_empty() {
+                extracted_thumbnails = video_details
+                    .get("thumbnail")
+                    .and_then(|t| t.get("thumbnails"))
+                    .and_then(|t| t.as_array())
+                    .cloned()
+                    .unwrap_or_default()
+                    .iter()
+                    .filter_map(|t| {
+                        t.get("url")
+                            .and_then(|v| v.as_str())
+                            .map(|url| YtThumbnail {
+                                url: url.to_string(),
+                                height: t.get("height").and_then(|h| h.as_u64()),
+                                width: t.get("width").and_then(|w| w.as_u64()),
+                            })
+                    })
+                    .collect();
+            }
+
+            if extracted_description.is_none() {
+                extracted_description = video_details
+                    .get("shortDescription")
+                    .and_then(|s| s.as_str())
+                    .and_then(|s| Some(s.to_string()))
+                    .clone();
+            }
+
+            if extracted_age_limit.is_none() {
+                extracted_age_limit = Some(
+                    match microformats
+                        .get("isFamilySafe")
+                        .unwrap_or_default()
+                        .as_bool()
+                        .unwrap_or_default()
+                    {
+                        true => YtAgeLimit::Adult,
+                        false => YtAgeLimit::None,
+                    },
+                )
+            }
+        }
+
+        if let (
+            Some(title),
+            Some(description),
+            Some(length_seconds),
+            Some(view_count),
+            Some(channel_id),
+        ) = (
+            extracted_title,
+            extracted_description,
+            extracted_length_seconds,
+            extracted_view_count,
+            extracted_channel_id,
+        ) {
+            return Ok(YtVideoInfo {
+                title,
+                description,
+                duration: length_seconds,
+                view_count,
+                channel: YtChannel::new(channel_id, extracted_channel_name)?,
+                keywords: extracted_keywords.unwrap_or_default(),
+                thumbnails: extracted_thumbnails,
+                age_limit: extracted_age_limit.unwrap_or_default(),
+                media_type: extracted_media_type.unwrap_or_default(),
+            });
+        }
+
+        bail!(
+            "Extracting video info (metadata) failed because not all required keys were returned by YouTube."
+        )
     }
 
     async fn extract(
-        &mut self,
+        &self,
         webpage_url: &str,
         webpage_client: &YtClient,
         video_id: &VideoId,
@@ -331,7 +502,7 @@ impl InfoExtractor for YtExtractor {
         Ok(player_responses)
     }
 
-    async fn extract_manifest(&mut self, video_id: &VideoId) -> Result<YtManifest> {
+    async fn extract_manifest(&self, video_id: &VideoId) -> Result<YtManifest> {
         // yt-dlp snippet: self.http_scheme() + "://"
         let webpage_url = "https://www.youtube.com/watch";
         let (initial_extracted_data, player_url) =
@@ -340,7 +511,7 @@ impl InfoExtractor for YtExtractor {
         Ok(YtManifest::new(initial_extracted_data, player_url))
     }
 
-    async fn extract_streams(&mut self, video_id: &VideoId) -> Result<YtStreamResponse> {
+    async fn extract_streams(&self, video_id: &VideoId) -> Result<YtStreamResponse> {
         let yt_manifest = self.extract_manifest(video_id).await?;
 
         let formats = self.extract_formats(yt_manifest.extracted_manifest)?;
@@ -357,10 +528,15 @@ impl InfoExtractor for YtExtractor {
         Ok(YtStreamResponse::new(manifest.player_url.clone(), formats))
     }
 
-    async fn extract_video_info(&mut self, video_id: &VideoId) -> Result<YtVideoInfo> {
+    async fn extract_video_info(&self, video_id: &VideoId) -> Result<YtVideoInfo> {
         let yt_manifest = self.extract_manifest(video_id).await?;
 
         let yt_video_info = self.extract_metadata(yt_manifest.extracted_manifest)?;
+        Ok(yt_video_info)
+    }
+
+    async fn extract_video_info_from_manifest(&self, manifest: &YtManifest) -> Result<YtVideoInfo> {
+        let yt_video_info = self.extract_metadata(manifest.extracted_manifest.clone())?;
         Ok(yt_video_info)
     }
 }

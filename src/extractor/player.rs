@@ -23,11 +23,11 @@ pub trait ExtractorPlayerHandle {
     fn is_unplayable(&self, player_response: &HashMap<String, Value>) -> bool;
     fn is_age_gated(&self, player_response: &HashMap<String, Value>) -> bool;
     fn generate_player_context(&self, sts: Option<i64>) -> HashMap<String, Value>;
-    async fn load_player(&mut self, video_id: &VideoId, player_url: String) -> Result<String>;
+    async fn load_player(&self, video_id: &VideoId, player_url: String) -> Result<String>;
     /// Extract `signatureTimestamp` (sts)
     /// Required to tell API what sig/player version is in use.
     async fn extract_signature_timestamp(
-        &mut self,
+        &self,
         video_id: &VideoId,
         player_url: String,
         ytcfg: &HashMap<String, Value>,
@@ -40,7 +40,7 @@ pub trait ExtractorPlayerHandle {
         video_id: &VideoId,
     ) -> Option<String>;
     async fn extract_player_response(
-        &mut self,
+        &self,
         client: &YtClient,
         video_id: &VideoId,
         webpage_ytcfg: &HashMap<String, Value>,
@@ -51,7 +51,7 @@ pub trait ExtractorPlayerHandle {
         data_sync_id: &Option<String>,
     ) -> Result<HashMap<String, Value>>;
     async fn extract_player_responses(
-        &mut self,
+        &self,
         clients: &Vec<YtClient>,
         video_id: &VideoId,
         webpage: &String,
@@ -171,7 +171,7 @@ impl ExtractorPlayerHandle for YtExtractor {
         false
     }
 
-    async fn load_player(&mut self, video_id: &VideoId, player_url: String) -> Result<String> {
+    async fn load_player(&self, video_id: &VideoId, player_url: String) -> Result<String> {
         let player_js_key = self.player_cache.player_js_cache_key(&player_url)?;
 
         if self.code_cache.contains(&player_js_key)? {
@@ -190,7 +190,7 @@ impl ExtractorPlayerHandle for YtExtractor {
     }
 
     async fn extract_signature_timestamp(
-        &mut self,
+        &self,
         video_id: &VideoId,
         player_url: String,
         ytcfg: &HashMap<String, Value>,
@@ -248,7 +248,7 @@ impl ExtractorPlayerHandle for YtExtractor {
     }
 
     async fn extract_player_response(
-        &mut self,
+        &self,
         client: &YtClient,
         video_id: &VideoId,
         webpage_ytcfg: &HashMap<String, Value>,
@@ -311,7 +311,7 @@ impl ExtractorPlayerHandle for YtExtractor {
     }
 
     async fn extract_player_responses(
-        &mut self,
+        &self,
         clients: &Vec<YtClient>,
         video_id: &VideoId,
         webpage: &String,

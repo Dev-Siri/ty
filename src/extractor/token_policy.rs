@@ -19,8 +19,8 @@ pub struct GvsPoTokenPolicy {
     pub not_required_with_player_token: bool,
 }
 
-impl GvsPoTokenPolicy {
-    pub fn default() -> Self {
+impl Default for GvsPoTokenPolicy {
+    fn default() -> Self {
         Self {
             required: false,
             recommended: false,
@@ -51,8 +51,8 @@ pub struct PlayerPoTokenPolicy {
     pub not_required_for_premium: bool,
 }
 
-impl PlayerPoTokenPolicy {
-    pub fn default() -> Self {
+impl Default for PlayerPoTokenPolicy {
+    fn default() -> Self {
         Self {
             required: false,
             recommended: false,
@@ -68,8 +68,8 @@ pub struct SubsPoTokenPolicy {
     pub not_required_for_premium: bool,
 }
 
-impl SubsPoTokenPolicy {
-    pub fn default() -> Self {
+impl Default for SubsPoTokenPolicy {
+    fn default() -> Self {
         Self {
             required: false,
             recommended: false,

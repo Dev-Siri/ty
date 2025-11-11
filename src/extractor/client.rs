@@ -162,8 +162,8 @@ pub static INNERTUBE_CLIENTS: Lazy<HashMap<YtClient, InnerTubeClient>> = Lazy::n
             require_auth: false,
             authenticated_user_agent: None,
             gvs_po_token_policy: WEB_PO_TOKEN_POLICIES.gvs_po_token_policy.clone(),
-            player_po_token_policy: PlayerPoTokenPolicy::default(),
-            subs_po_token_policy: SubsPoTokenPolicy::default(),
+            player_po_token_policy: Default::default(),
+            subs_po_token_policy: Default::default(),
         },
     );
 
@@ -187,8 +187,8 @@ pub static INNERTUBE_CLIENTS: Lazy<HashMap<YtClient, InnerTubeClient>> = Lazy::n
             require_auth: true,
             authenticated_user_agent: None,
             gvs_po_token_policy: WEB_PO_TOKEN_POLICIES.gvs_po_token_policy.clone(),
-            player_po_token_policy: PlayerPoTokenPolicy::default(),
-            subs_po_token_policy: SubsPoTokenPolicy::default(),
+            player_po_token_policy: Default::default(),
+            subs_po_token_policy: Default::default(),
         },
     );
 
@@ -255,7 +255,7 @@ pub static INNERTUBE_CLIENTS: Lazy<HashMap<YtClient, InnerTubeClient>> = Lazy::n
                 recommended: true,
                 not_required_for_premium: false,
             },
-            subs_po_token_policy: SubsPoTokenPolicy::default(),
+            subs_po_token_policy: Default::default(),
         },
     );
 
@@ -285,8 +285,8 @@ pub static INNERTUBE_CLIENTS: Lazy<HashMap<YtClient, InnerTubeClient>> = Lazy::n
             require_auth: false,
             authenticated_user_agent: None,
             gvs_po_token_policy: create_default_gvs_po_token_policy(),
-            player_po_token_policy: PlayerPoTokenPolicy::default(),
-            subs_po_token_policy: SubsPoTokenPolicy::default(),
+            player_po_token_policy: Default::default(),
+            subs_po_token_policy: Default::default(),
         },
     );
 
@@ -319,8 +319,8 @@ pub static INNERTUBE_CLIENTS: Lazy<HashMap<YtClient, InnerTubeClient>> = Lazy::n
             require_auth: false,
             authenticated_user_agent: None,
             gvs_po_token_policy: create_default_gvs_po_token_policy(),
-            player_po_token_policy: PlayerPoTokenPolicy::default(),
-            subs_po_token_policy: SubsPoTokenPolicy::default(),
+            player_po_token_policy: Default::default(),
+            subs_po_token_policy: Default::default(),
         },
     );
 
@@ -379,7 +379,7 @@ pub static INNERTUBE_CLIENTS: Lazy<HashMap<YtClient, InnerTubeClient>> = Lazy::n
                 recommended: true,
                 not_required_for_premium: false,
             },
-            subs_po_token_policy: SubsPoTokenPolicy::default(),
+            subs_po_token_policy: Default::default(),
         },
     );
 
@@ -407,8 +407,8 @@ pub static INNERTUBE_CLIENTS: Lazy<HashMap<YtClient, InnerTubeClient>> = Lazy::n
             require_auth: false,
             authenticated_user_agent: None,
             gvs_po_token_policy: WEB_PO_TOKEN_POLICIES.gvs_po_token_policy.clone(),
-            player_po_token_policy: PlayerPoTokenPolicy::default(),
-            subs_po_token_policy: SubsPoTokenPolicy::default(),
+            player_po_token_policy: Default::default(),
+            subs_po_token_policy: Default::default(),
         },
     );
 
@@ -436,8 +436,8 @@ pub static INNERTUBE_CLIENTS: Lazy<HashMap<YtClient, InnerTubeClient>> = Lazy::n
             require_auth: false,
             authenticated_user_agent: Some("Mozilla/5.0 (ChromiumStylePlatform) Cobalt/25.lts.30.1034943-gold (unlike Gecko), Unknown_TV_Unknown_0/Unknown (Unknown, Unknown)"),
             gvs_po_token_policy: WEB_PO_TOKEN_POLICIES.gvs_po_token_policy.clone(),
-            player_po_token_policy: PlayerPoTokenPolicy::default(),
-            subs_po_token_policy: SubsPoTokenPolicy::default(),
+            player_po_token_policy: Default::default(),
+            subs_po_token_policy: Default::default(),
         },
     );
 
@@ -492,8 +492,8 @@ pub static INNERTUBE_CLIENTS: Lazy<HashMap<YtClient, InnerTubeClient>> = Lazy::n
             require_auth: false,
             authenticated_user_agent: None,
             gvs_po_token_policy: tv_simply_gvs_po_token_policy,
-            player_po_token_policy: PlayerPoTokenPolicy::default(),
-            subs_po_token_policy: SubsPoTokenPolicy::default(),
+            player_po_token_policy: Default::default(),
+            subs_po_token_policy: Default::default(),
         },
     );
 
@@ -517,8 +517,8 @@ pub static INNERTUBE_CLIENTS: Lazy<HashMap<YtClient, InnerTubeClient>> = Lazy::n
             require_auth: true,
             authenticated_user_agent: None,
             gvs_po_token_policy: create_default_gvs_po_token_policy(),
-            player_po_token_policy: PlayerPoTokenPolicy::default(),
-            subs_po_token_policy: SubsPoTokenPolicy::default(),
+            player_po_token_policy: Default::default(),
+            subs_po_token_policy: Default::default(),
         },
     );
 
