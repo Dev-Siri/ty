@@ -267,7 +267,6 @@ impl Extract for Tydle {
 #[cfg(target_arch = "wasm32")]
 mod wasm_api {
     use super::*;
-    use serde_wasm_bindgen::{from_value, to_value as to_js_value};
     use wasm_bindgen::JsValue;
 
     #[wasm_bindgen]
@@ -289,79 +288,77 @@ mod wasm_api {
         }
 
         #[wasm_bindgen(js_name = "fetchStreams")]
-        pub async fn fetch_streams(&self, video_id: String) -> Result<JsValue, JsValue> {
+        pub async fn fetch_streams(
+            &self,
+            #[wasm_bindgen(js_name = "videoId")] video_id: String,
+        ) -> Result<YtStreamResponse, JsValue> {
             let id = VideoId::new(&video_id).map_err(|e| JsValue::from_str(&e.to_string()))?;
 
-            let res = self
+            Ok(self
                 .get_streams(&id)
                 .await
-                .map_err(|e| JsValue::from_str(&e.to_string()))?;
-            to_js_value(&res).map_err(|e| JsValue::from_str(&e.to_string()))
+                .map_err(|e| JsValue::from_str(&e.to_string()))?)
         }
 
         #[wasm_bindgen(js_name = "fetchVideoInfo")]
-        pub async fn fetch_video_info(&self, video_id: String) -> Result<JsValue, JsValue> {
+        pub async fn fetch_video_info(
+            &self,
+            #[wasm_bindgen(js_name = "videoId")] video_id: String,
+        ) -> Result<YtVideoInfo, JsValue> {
             let id = VideoId::new(&video_id).map_err(|e| JsValue::from_str(&e.to_string()))?;
 
-            let res = self
+            Ok(self
                 .get_video_info(&id)
                 .await
-                .map_err(|e| JsValue::from_str(&e.to_string()))?;
-            to_js_value(&res).map_err(|e| JsValue::from_str(&e.to_string()))
+                .map_err(|e| JsValue::from_str(&e.to_string()))?)
         }
 
         #[wasm_bindgen(js_name = "fetchVideoInfoFromManifest")]
         pub async fn fetch_video_info_from_manifest(
             &self,
-            manifest: JsValue,
-        ) -> Result<JsValue, JsValue> {
-            let manifest: YtManifest = from_value(manifest)
-                .map_err(|e| JsValue::from_str(&format!("Invalid manifest: {e}")))?;
-
-            let res = self
+            manifest: YtManifest,
+        ) -> Result<YtVideoInfo, JsValue> {
+            Ok(self
                 .get_video_info_from_manifest(&manifest)
                 .await
-                .map_err(|e| JsValue::from_str(&e.to_string()))?;
-            to_js_value(&res).map_err(|e| JsValue::from_str(&e.to_string()))
+                .map_err(|e| JsValue::from_str(&e.to_string()))?)
         }
 
         #[wasm_bindgen(js_name = "fetchStreamsFromManifest")]
         pub async fn fetch_streams_from_manifest(
             &self,
-            manifest: JsValue,
-        ) -> Result<JsValue, JsValue> {
-            let parsed_manifest: YtManifest = from_value(manifest)
-                .map_err(|e| JsValue::from_str(&format!("Invalid manifest: {e}")))?;
-
-            let res = self
-                .get_streams_from_manifest(&parsed_manifest)
+            manifest: YtManifest,
+        ) -> Result<YtStreamResponse, JsValue> {
+            Ok(self
+                .get_streams_from_manifest(&manifest)
                 .await
-                .map_err(|e| JsValue::from_str(&e.to_string()))?;
-            to_js_value(&res).map_err(|e| JsValue::from_str(&e.to_string()))
+                .map_err(|e| JsValue::from_str(&e.to_string()))?)
         }
 
         #[wasm_bindgen(js_name = "fetchManifest")]
-        pub async fn fetch_manifest(&self, video_id: String) -> Result<JsValue, JsValue> {
+        pub async fn fetch_manifest(
+            &self,
+            #[wasm_bindgen(js_name = "videoId")] video_id: String,
+        ) -> Result<YtManifest, JsValue> {
             let id = VideoId::new(&video_id).map_err(|e| JsValue::from_str(&e.to_string()))?;
 
-            let res = self
+            Ok(self
                 .get_manifest(&id)
                 .await
-                .map_err(|e| JsValue::from_str(&e.to_string()))?;
-            to_js_value(&res).map_err(|e| JsValue::from_str(&e.to_string()))
+                .map_err(|e| JsValue::from_str(&e.to_string()))?)
         }
 
         #[wasm_bindgen(js_name = "decipherSignature")]
         pub async fn decipher_signature_js(
             &self,
             signature: String,
-            player_url: String,
-        ) -> Result<JsValue, JsValue> {
+            #[wasm_bindgen(js_name = "playerUrl")] player_url: String,
+        ) -> Result<String, JsValue> {
             let res = self
                 .decipher_signature(signature, player_url)
                 .await
                 .map_err(|e| JsValue::from_str(&e.to_string()))?;
-            Ok(res.into())
+            Ok(res)
         }
     }
 }
