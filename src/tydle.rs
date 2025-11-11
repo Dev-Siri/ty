@@ -44,6 +44,9 @@ pub trait Extract {
     /// need to fetch either and not both since they call `Tydle::get_manifest` themselves internally.
     ///
     /// ```
+    /// use tydle::{Tydle, Extract, VideoId, YtManifest};
+    /// use anyhow::Result;
+    ///
     /// #[tokio::main]
     /// async fn main() -> Result<()> {
     ///   let ty = Tydle::new()?;
@@ -51,14 +54,14 @@ pub trait Extract {
     ///   let video_id = VideoId::new("dQw4w9WgXcQ")?;
     ///
     ///   // Since you have this manifest separately, you can pass it to a fetcher.
-    ///
-    ///   let manifest: YtManifest = ty.get_manifest(&video_id)?;
-    ///   let streams = ty.get_streams_from_manifest(&manifest)?;
-    ///   let video_info = ty.get_video_info_from_manifest(&manifest)?;
+    ///   let manifest: YtManifest = ty.get_manifest(&video_id).await?;
+    ///   let streams = ty.get_streams_from_manifest(&manifest).await?;
+    ///   let video_info = ty.get_video_info_from_manifest(&manifest).await?;
     ///
     ///   println!("Manifest: {:?}", manifest);
     ///   println!("Streams: {:?}", streams);
     ///   println!("Video Metadata: {:?}", video_info);
+    ///   Ok(())
     /// }
     /// ```
     fn get_manifest<'a>(&'a self, video_id: &'a VideoId) -> Self::ExtractManifestFut<'a>;
@@ -67,14 +70,18 @@ pub trait Extract {
     /// If you already have a raw manifest fetched, use `Tydle::get_video_info_from_manifest` instead to avoid refetching.
     ///
     /// ```
+    /// use tydle::{Tydle, Extract, VideoId, YtVideoInfo};
+    /// use anyhow::Result;
+    ///
     /// #[tokio::main]
     /// async fn main() -> Result<()> {
     ///   let ty = Tydle::new()?;
     ///
     ///   let video_id = VideoId::new("dQw4w9WgXcQ")?;
-    ///   let video_info: YtVideoInfo = ty.get_video_info(&video_id)?;
+    ///   let video_info: YtVideoInfo = ty.get_video_info(&video_id).await?;
     ///
     ///   println!("Video Metadata: {:?}", video_info);
+    ///   Ok(())
     /// }
     /// ```
     fn get_video_info<'a>(&'a self, video_id: &'a VideoId) -> Self::ExtractInfoFut<'a>;
@@ -83,16 +90,20 @@ pub trait Extract {
     /// If you do not require using the manifest directly, use `Tydle::get_video_info` instead to fetch directly.
     ///
     /// ```
+    /// use tydle::{Tydle, Extract, VideoId, YtVideoInfo};
+    /// use anyhow::Result;
+    ///
     /// #[tokio::main]
     /// async fn main() -> Result<()> {
     ///   let ty = Tydle::new()?;
     ///
     ///   let video_id = VideoId::new("dQw4w9WgXcQ")?;
     ///
-    ///   let manifest = ty.get_manifest(&video_id)?;
-    ///   let video_info: YtVideoInfo = ty.get_video_info_from_manifest(&manifest)?;
+    ///   let manifest = ty.get_manifest(&video_id).await?;
+    ///   let video_info: YtVideoInfo = ty.get_video_info_from_manifest(&manifest).await?;
     ///
     ///   println!("Video Metadata: {:?}", video_info);
+    ///   Ok(())
     /// }
     /// ```
     ///
@@ -105,18 +116,23 @@ pub trait Extract {
     /// If you do not require using the manifest directly, use `Tydle::get_streams` instead to fetch directly.
     ///
     /// ```
+    /// use tydle::{Tydle, Extract, VideoId, YtStreamResponse};
+    /// use anyhow::Result;
+    ///
     /// #[tokio::main]
     /// async fn main() -> Result<()> {
     ///   let ty = Tydle::new()?;
     ///
     ///   let video_id = VideoId::new("dQw4w9WgXcQ")?;
     ///
-    ///   let manifest = ty.get_manifest(&video_id)?;
-    ///   let stream_response: YtStreamResponse = ty.get_streams_from_manifest(&manifest)?;
+    ///   let manifest = ty.get_manifest(&video_id).await?;
+    ///   let stream_response: YtStreamResponse = ty.get_streams_from_manifest(&manifest).await?;
     ///
     ///   for stream in stream_response.streams {
     ///     println!("Stream: {:?}", stream);
     ///   }
+    ///
+    ///   Ok(())
     /// }
     /// ```
     ///
@@ -129,16 +145,21 @@ pub trait Extract {
     /// If you already have a raw manifest fetched, use `Tydle::get_streams_from_manifest` instead to avoid refetching.
     ///
     /// ```
+    /// use tydle::{Tydle, Extract, VideoId, YtStreamResponse};
+    /// use anyhow::Result;
+    ///
     /// #[tokio::main]
     /// async fn main() -> Result<()> {
     ///   let ty = Tydle::new()?;
     ///
     ///   let video_id = VideoId::new("dQw4w9WgXcQ")?;
-    ///   let stream_response: YtStreamResponse = ty.get_streams(&video_id)?;
+    ///   let stream_response: YtStreamResponse = ty.get_streams(&video_id).await?;
     ///
     ///   for stream in stream_response.streams {
     ///     println!("Stream: {:?}", stream);
     ///   }
+    ///
+    ///   Ok(())
     /// }
     /// ```
     fn get_streams<'a>(&'a self, video_id: &'a VideoId) -> Self::ExtractStreamFut<'a>;

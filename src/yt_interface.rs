@@ -1,5 +1,5 @@
 use core::fmt;
-use std::{collections::HashMap, str::FromStr};
+use std::{collections::HashMap, ops::Deref, str::FromStr};
 
 use anyhow::{Result, anyhow, bail};
 use serde_json::Value;
@@ -252,22 +252,50 @@ pub type YtStreams = Vec<YtStream>;
 #[derive(Debug)]
 pub struct YtStreamList(YtStreams);
 
+impl<'a> IntoIterator for &'a YtStreamList {
+    type Item = &'a YtStream;
+    type IntoIter = std::slice::Iter<'a, YtStream>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
+impl IntoIterator for YtStreamList {
+    type Item = YtStream;
+    type IntoIter = std::vec::IntoIter<YtStream>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl Deref for YtStreamList {
+    type Target = Vec<YtStream>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 pub trait Filterable {
     /// Filter to return video-only streams.
     ///
     /// ```
-    /// use tydle::{Tydle, VideoId};
+    /// use tydle::{Tydle, VideoId, Extract, Filterable};
     /// use anyhow::Result;
     ///
-    /// #[tokio::test]
+    /// #[tokio::main]
     /// async fn main() -> Result<()> {
     ///   let ty = Tydle::new()?;
     ///   // Get the stream with the lowest bitrate.
     ///   let video_only = ty
-    ///      .fetch_streams(&VideoId::new("dQw4w9WgXcQ")?)
+    ///      .get_streams(&VideoId::new("dQw4w9WgXcQ")?)
+    ///      .await?
+    ///      .streams
     ///      .video_only();
     ///
-    ///    println!("Video-Only stream: {:?}", video_only);
+    ///    println!("Video-Only streams: {:?}", video_only);
     ///    Ok(())
     /// }
     /// ```
@@ -275,7 +303,7 @@ pub trait Filterable {
     /// Filter to return audio-only streams.
     ///
     /// ```
-    /// use tydle::{Tydle, VideoId};
+    /// use tydle::{Tydle, Extract, VideoId, Filterable};
     /// use anyhow::Result;
     ///
     /// #[tokio::main]
@@ -283,44 +311,55 @@ pub trait Filterable {
     ///   let ty = Tydle::new()?;
     ///   // Get the stream with the lowest bitrate.
     ///   let audio_only = ty
-    ///      .fetch_streams(&VideoId::new("dQw4w9WgXcQ")?)
+    ///      .get_streams(&VideoId::new("dQw4w9WgXcQ")?)
+    ///      .await?
+    ///      .streams
     ///      .audio_only();
     ///
-    ///    println!("Audio-Only stream: {:?}", audio_only);
+    ///    println!("Audio-Only streams: {:?}", audio_only);
+    ///    Ok(())
     /// }
     /// ```
     fn audio_only(&self) -> YtStreamList;
     /// Filter to return only those streams which do not require signature deciphering.
     ///
     /// ```
-    /// use tydle::{Tydle, VideoId};
+    /// use tydle::{Tydle, Extract, VideoId, Filterable};
     /// use anyhow::Result;
     ///
     /// #[tokio::main]
     /// async fn main() -> Result<()> {
     ///   let ty = Tydle::new()?;
     ///   // Get the stream with the lowest bitrate.
-    ///   let lowest_br_stream = ty
-    ///      .fetch_streams(&VideoId::new("dQw4w9WgXcQ")?)
-    ///      .with_lowest_bitrate()
-    ///      .first();
+    ///   let lowest_br_streams = ty
+    ///      .get_streams(&VideoId::new("dQw4w9WgXcQ")?)
+    ///      .await?
+    ///      .streams
+    ///      .with_lowest_bitrate();
+    ///
+    ///   println!("Lowest bitrate stream: {:?}", lowest_br_streams.first());
+    ///   Ok(())
     /// }
     /// ```
     fn with_lowest_bitrate(&self) -> YtStreamList;
     /// Sort streams to highest bitrate first.
     ///
     /// ```
-    /// use tydle::{Tydle, VideoId};
+    /// use tydle::{Tydle, Extract, VideoId, Filterable};
     /// use anyhow::Result;
     ///
     /// #[tokio::main]
     /// async fn main() -> Result<()> {
     ///   let ty = Tydle::new()?;
-    ///   // Get the stream with the highest bitrate.
-    ///   let highest_br_stream = ty
-    ///      .fetch_streams(&VideoId::new("dQw4w9WgXcQ")?)
-    ///      .with_highest_bitrate()
-    ///      .first();
+    ///   // Get the streams with the highest bitrate.
+    ///   let highest_br_streams = ty
+    ///      .get_streams(&VideoId::new("dQw4w9WgXcQ")?)
+    ///      .await?
+    ///      .streams
+    ///      .with_highest_bitrate();
+    ///
+    ///   println!("Highest bitrate stream: {:?}", highest_br_streams.first());
+    ///   Ok(())
     /// }
     /// ```
     fn with_highest_bitrate(&self) -> YtStreamList;
@@ -328,23 +367,31 @@ pub trait Filterable {
     /// For the purpose of signature deciphering, use `Tydle::decipher_signature`
     ///
     /// ```
-    /// use tydle::{Ty, VideoId};
+    /// use tydle::{Tydle, Extract, VideoId, Filterable};
     /// use anyhow::Result;
     ///
     /// #[tokio::main]
     /// async fn main() -> Result<()> {
     ///   let ty = Tydle::new()?;
-    ///   // Get direct URL streams.
+    ///   // Get direct signature streams.
     ///   let signature_streams = ty
-    ///      .fetch_streams(&VideoId::new("dQw4w9WgXcQ")?)
-    ///      .only_signatures()
+    ///      .get_streams(&VideoId::new("dQw4w9WgXcQ")?)
+    ///      .await?
+    ///      .streams
+    ///      .only_signatures();
+    ///
+    ///   for stream in signature_streams {
+    ///     println!("Signature: {:?}", stream.source);
+    ///   }
+    ///
+    ///   Ok(())
     /// }
     /// ```
     fn only_signatures(&self) -> YtStreamList;
     /// Filter streams to return only those which do not require signature deciphering.
     ///
     /// ```
-    /// use tydle::{Ty, VideoId};
+    /// use tydle::{Tydle, Extract, VideoId, Filterable};
     /// use anyhow::Result;
     ///
     /// #[tokio::main]
@@ -352,8 +399,16 @@ pub trait Filterable {
     ///   let ty = Tydle::new()?;
     ///   // Get direct URL streams.
     ///   let url_streams = ty
-    ///      .fetch_streams(&VideoId::new("dQw4w9WgXcQ")?)
-    ///      .only_urls()
+    ///      .get_streams(&VideoId::new("dQw4w9WgXcQ")?)
+    ///      .await?
+    ///      .streams
+    ///      .only_urls();
+    ///
+    ///   for stream in url_streams {
+    ///     println!("URL: {:?}", stream.source);
+    ///   }
+    ///
+    ///   Ok(())
     /// }
     /// ```
     fn only_urls(&self) -> YtStreamList;
