@@ -1,14 +1,20 @@
 [package]
-name = "ty"
+name = "tydle"
 description = "YouTube video extractor written in Rust that can be used anywhere in web or native environments, based on an extremely small subset of yt-dlp."
 version = "0.1.0"
 authors = ["Dev-Siri"]
 license = "MIT"
-repository = "https://github.com/Dev-Siri/ty"
+repository = "https://github.com/Dev-Siri/tydle"
+homepage = "https://github.com/Dev-Siri/tydle"
+documentation = "https://docs.rs/tydle"
+readme = "README.md"
+keywords = ["youtube", "extractor", "yt-dlp", "video", "innertube"]
+categories = ["multimedia", "web-programming", "api-bindings"]
+include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 edition = "2024"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 anyhow = "1.0.100"
@@ -19,6 +25,7 @@ phf = "0.13.1"
 rayon = "1.11.0"
 reqwest = { version = "0.12.24", features = ["json"]}
 serde = { version = "1.0.228", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
 serde_json = "1.0.145"
 sha1 = "0.10.6"
 url = "2.5.7"

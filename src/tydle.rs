@@ -14,12 +14,12 @@ use crate::{
     yt_interface::VideoId,
 };
 
-pub struct Ty {
+pub struct Tydle {
     yt_extractor: Arc<Mutex<YtExtractor>>,
     signature_decipher: Arc<Mutex<SignatureDecipher>>,
 }
 
-impl Ty {
+impl Tydle {
     pub fn new() -> Result<Self> {
         let player_cache = Arc::new(CacheStore::new());
         let code_cache = Arc::new(CacheStore::new());
@@ -36,30 +36,122 @@ impl Ty {
 
 pub trait Extract {
     /// Extract the raw JSON manifest from YouTube's API.
+    ///
+    /// This method is useful if you need to fetch both the metadata and the streams of a particular video.
+    /// Call this method once to extract the video's raw JSON manifest,
+    /// and then pass it to either `Tydle::get_video_info_from_manifest` or `Tydle::get_streams_from_manifest`.
+    /// It's better to use `Tydle::get_video_info` or `Tydle::get_streams` directly if you only
+    /// need to fetch either and not both since they call `Tydle::get_manifest` themselves internally.
+    ///
+    /// ```
+    /// #[tokio::main]
+    /// async fn main() -> Result<()> {
+    ///   let ty = Tydle::new()?;
+    ///
+    ///   let video_id = VideoId::new("dQw4w9WgXcQ")?;
+    ///
+    ///   // Since you have this manifest separately, you can pass it to a fetcher.
+    ///
+    ///   let manifest: YtManifest = ty.get_manifest(&video_id)?;
+    ///   let streams = ty.get_streams_from_manifest(&manifest)?;
+    ///   let video_info = ty.get_video_info_from_manifest(&manifest)?;
+    ///
+    ///   println!("Manifest: {:?}", manifest);
+    ///   println!("Streams: {:?}", streams);
+    ///   println!("Video Metadata: {:?}", video_info);
+    /// }
+    /// ```
     fn get_manifest<'a>(&'a self, video_id: &'a VideoId) -> Self::ExtractManifestFut<'a>;
-    /// Extract metadata of a video from YouTube.
+    /// Extract the metadata of a video from YouTube.
+    ///
+    /// If you already have a raw manifest fetched, use `Tydle::get_video_info_from_manifest` instead to avoid refetching.
+    ///
+    /// ```
+    /// #[tokio::main]
+    /// async fn main() -> Result<()> {
+    ///   let ty = Tydle::new()?;
+    ///
+    ///   let video_id = VideoId::new("dQw4w9WgXcQ")?;
+    ///   let video_info: YtVideoInfo = ty.get_video_info(&video_id)?;
+    ///
+    ///   println!("Video Metadata: {:?}", video_info);
+    /// }
+    /// ```
     fn get_video_info<'a>(&'a self, video_id: &'a VideoId) -> Self::ExtractInfoFut<'a>;
     /// Fetch and parse general video information (metadata) from an already fetched manifest.
+    ///
+    /// If you do not require using the manifest directly, use `Tydle::get_video_info` instead to fetch directly.
+    ///
+    /// ```
+    /// #[tokio::main]
+    /// async fn main() -> Result<()> {
+    ///   let ty = Tydle::new()?;
+    ///
+    ///   let video_id = VideoId::new("dQw4w9WgXcQ")?;
+    ///
+    ///   let manifest = ty.get_manifest(&video_id)?;
+    ///   let video_info: YtVideoInfo = ty.get_video_info_from_manifest(&manifest)?;
+    ///
+    ///   println!("Video Metadata: {:?}", video_info);
+    /// }
+    /// ```
+    ///
     fn get_video_info_from_manifest<'a>(
         &'a self,
         manifest: &'a YtManifest,
     ) -> Self::ExtractInfoFut<'a>;
     /// Fetch and parse the streams from an already fetched manifest.
+    ///
+    /// If you do not require using the manifest directly, use `Tydle::get_streams` instead to fetch directly.
+    ///
+    /// ```
+    /// #[tokio::main]
+    /// async fn main() -> Result<()> {
+    ///   let ty = Tydle::new()?;
+    ///
+    ///   let video_id = VideoId::new("dQw4w9WgXcQ")?;
+    ///
+    ///   let manifest = ty.get_manifest(&video_id)?;
+    ///   let stream_response: YtStreamResponse = ty.get_streams_from_manifest(&manifest)?;
+    ///
+    ///   for stream in stream_response.streams {
+    ///     println!("Stream: {:?}", stream);
+    ///   }
+    /// }
+    /// ```
+    ///
     fn get_streams_from_manifest<'a>(
         &'a self,
         manifest: &'a YtManifest,
     ) -> Self::ExtractStreamFut<'a>;
-    type DecipherFut<'a>: Future<Output = Result<String>> + 'a
-    where
-        Self: 'a;
+    /// Extract playable streams from YouTube and get their source either as a `Signature` or an `URL`
+    ///
+    /// If you already have a raw manifest fetched, use `Tydle::get_streams_from_manifest` instead to avoid refetching.
+    ///
+    /// ```
+    /// #[tokio::main]
+    /// async fn main() -> Result<()> {
+    ///   let ty = Tydle::new()?;
+    ///
+    ///   let video_id = VideoId::new("dQw4w9WgXcQ")?;
+    ///   let stream_response: YtStreamResponse = ty.get_streams(&video_id)?;
+    ///
+    ///   for stream in stream_response.streams {
+    ///     println!("Stream: {:?}", stream);
+    ///   }
+    /// }
+    /// ```
+    fn get_streams<'a>(&'a self, video_id: &'a VideoId) -> Self::ExtractStreamFut<'a>;
+
     /// Deciphers a stream's signature and returns it's URL.
     fn decipher_signature<'a>(
         &'a self,
         signature: String,
         player_url: String,
     ) -> Self::DecipherFut<'a>;
-    /// Extract playable streams from YouTube and get their source either as a `Signature` or an `URL`
-    fn get_streams<'a>(&'a self, video_id: &'a VideoId) -> Self::ExtractStreamFut<'a>;
+    type DecipherFut<'a>: Future<Output = Result<String>> + 'a
+    where
+        Self: 'a;
     type ExtractStreamFut<'a>: Future<Output = Result<YtStreamResponse>> + 'a
     where
         Self: 'a;
@@ -71,7 +163,7 @@ pub trait Extract {
         Self: 'a;
 }
 
-impl Extract for Ty {
+impl Extract for Tydle {
     type ExtractStreamFut<'a> = Pin<Box<dyn Future<Output = Result<YtStreamResponse>> + 'a>>;
     type DecipherFut<'a> = Pin<Box<dyn Future<Output = Result<String>> + 'a>>;
     type ExtractInfoFut<'a> = Pin<Box<dyn Future<Output = Result<YtVideoInfo>> + 'a>>;
@@ -160,7 +252,7 @@ impl Extract for Ty {
 //         panic!("Invalid Video ID.")
 //     };
 
-//     match Ty::extract(&video_id_parsed).await {
+//     match Tydle::extract(&video_id_parsed).await {
 //         Ok(streams) => JsValue::from_str(""),
 //         Err(err) => panic!("{}", err),
 //     }

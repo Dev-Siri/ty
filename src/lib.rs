@@ -4,5 +4,5 @@ mod cookies;
 mod extractor;
 mod utils;
 
-pub mod ty;
+pub mod tydle;
 pub mod yt_interface;

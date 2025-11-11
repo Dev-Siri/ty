@@ -1993,7 +1993,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
-name = "ty"
+name = "tydle"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -2006,6 +2006,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha1",
+ "tokio",
  "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
