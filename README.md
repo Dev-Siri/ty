@@ -24,7 +24,6 @@ async fn main() -> Result<()> {
   let ty = Tydle::new()?;
 
   // Now you can fetch depending on what you need.
-
   let manifest = ty.get_manifest(...).await?;
   let streams = ty.get_streams(...).await?;
   let video_info = ty.get_video_info(...).await?;
@@ -46,6 +45,9 @@ $ git clone https://github.com/Dev-Siri/tydle
 ```
 
 ## Credits
+
+- [youtube_explode_dart](https://github.com/Hexer10/youtube_explode_dart) for the implementation of the Deno runtime for signature deciphering.
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) for documentation of the YouTube APIs and the EJS modules.
 
 ## License
 
