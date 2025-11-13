@@ -1,4 +1,4 @@
-# tydle
+# `tydle`
 
 [![Crates.io](https://img.shields.io/crates/v/tydle.svg)](https://crates.io/crates/tydle)
 
@@ -78,6 +78,20 @@ async fn main() -> Result<()> {
 }
 ```
 
+### Using The TypeScript API For The WASM Build
+
+Since `tydle` also compiles to WebAssembly, you can easily use it from TypeScript as well. Here's a simple example using TypeScript:
+
+```ts
+import { Tydle } from "tydle";
+
+const tydle = new Tydle();
+
+const { streams } = await tydle.fetchStreams("xITJ35Kwpv4");
+
+console.log(streams);
+```
+
 ### Pitfalls Of Using WASM For Browsers
 
 Since this library is focused for execution on client environments, you might be tempted to use the WebAssembly build for running it in the browser directly. However, even though you can get this `tydle` to run in the browser correctly, you won't be able to do anything useful other than signature deciphering. This happens because in the browser, CORS restrictions are imposed, preventing any fetches to YouTube's API from being possible.
@@ -154,7 +168,7 @@ $ cargo install wasm-pack
 After which, you can build with `wasm-pack` for target `wasm32-unknown-unknown` with an environment:
 
 ```sh
-$ wasm-pack build --target bundler
+$ wasm-pack build --target nodejs
 ```
 
 ## Credits

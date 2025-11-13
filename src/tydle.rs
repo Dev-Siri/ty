@@ -16,7 +16,13 @@ use crate::{
     yt_interface::VideoId,
 };
 
-#[cfg_attr(target_arch = "wasm32", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    target_arch = "wasm32",
+    derive(serde::Serialize, serde::Deserialize, tsify::Tsify),
+    tsify(into_wasm_abi, from_wasm_abi),
+    serde(rename_all = "camelCase"),
+    serde(default)
+)]
 #[derive(Default)]
 pub struct TydleOptions {
     /// Map of cookies extracted from an authenticated YouTube account.
@@ -288,16 +294,16 @@ mod wasm_api {
     #[wasm_bindgen]
     impl Tydle {
         #[wasm_bindgen(constructor)]
-        pub fn new(options: JsValue) -> Result<Tydle, JsValue> {
-            let tydle_options: TydleOptions = serde_wasm_bindgen::from_value(options)
-                .map_err(|e| JsValue::from_str(&e.to_string()))?;
-
+        pub fn new(options: Option<TydleOptions>) -> Result<Tydle, JsValue> {
             let player_cache = Arc::new(CacheStore::new());
             let code_cache = Arc::new(CacheStore::new());
 
-            let yt_extractor =
-                YtExtractor::new(player_cache.clone(), code_cache.clone(), tydle_options)
-                    .map_err(|e| JsValue::from_str(&e.to_string()))?;
+            let yt_extractor = YtExtractor::new(
+                player_cache.clone(),
+                code_cache.clone(),
+                options.unwrap_or_default(),
+            )
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
             let signature_decipher = SignatureDecipher::new(player_cache, code_cache);
 

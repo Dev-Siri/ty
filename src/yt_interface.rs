@@ -189,7 +189,8 @@ impl fmt::Display for VideoId {
 #[cfg_attr(
     target_arch = "wasm32",
     derive(serde::Serialize, serde::Deserialize, tsify::Tsify),
-    tsify(into_wasm_abi, from_wasm_abi)
+    tsify(into_wasm_abi, from_wasm_abi),
+    serde(rename_all = "camelCase")
 )]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct YtChannel {
@@ -219,7 +220,8 @@ impl YtChannel {
 #[cfg_attr(
     target_arch = "wasm32",
     derive(serde::Serialize, serde::Deserialize, tsify::Tsify),
-    tsify(into_wasm_abi, from_wasm_abi)
+    tsify(into_wasm_abi, from_wasm_abi),
+    serde(rename_all = "lowercase")
 )]
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum YtStreamSource {
@@ -230,7 +232,8 @@ pub enum YtStreamSource {
 #[cfg_attr(
     target_arch = "wasm32",
     derive(serde::Serialize, serde::Deserialize, tsify::Tsify),
-    tsify(into_wasm_abi, from_wasm_abi)
+    tsify(into_wasm_abi, from_wasm_abi),
+    serde(rename_all = "camelCase")
 )]
 #[derive(Debug, Clone)]
 pub struct YtStream {
@@ -262,12 +265,14 @@ impl YtStream {
     }
 }
 
+#[cfg_attr(target_arch = "wasm32", tsify::declare)]
 pub type YtStreams = Vec<YtStream>;
 
 #[cfg_attr(
     target_arch = "wasm32",
     derive(serde::Serialize, serde::Deserialize, tsify::Tsify),
-    tsify(into_wasm_abi, from_wasm_abi)
+    tsify(into_wasm_abi, from_wasm_abi),
+    serde(rename_all = "camelCase")
 )]
 #[derive(Debug)]
 pub struct YtStreamList(YtStreams);
@@ -507,7 +512,8 @@ impl Filterable for YtStreamList {
 #[cfg_attr(
     target_arch = "wasm32",
     derive(serde::Serialize, serde::Deserialize, tsify::Tsify),
-    tsify(into_wasm_abi, from_wasm_abi)
+    tsify(into_wasm_abi, from_wasm_abi),
+    serde(rename_all = "camelCase")
 )]
 #[derive(Debug)]
 pub struct YtStreamResponse {
@@ -527,7 +533,8 @@ impl YtStreamResponse {
 #[cfg_attr(
     target_arch = "wasm32",
     derive(serde::Serialize, serde::Deserialize, tsify::Tsify,),
-    tsify(into_wasm_abi, from_wasm_abi)
+    tsify(into_wasm_abi, from_wasm_abi),
+    serde(rename_all = "camelCase")
 )]
 #[derive(Debug)]
 pub struct YtManifest {
@@ -547,7 +554,8 @@ impl YtManifest {
 #[cfg_attr(
     target_arch = "wasm32",
     derive(serde::Serialize, serde::Deserialize, tsify::Tsify),
-    tsify(into_wasm_abi, from_wasm_abi)
+    tsify(into_wasm_abi, from_wasm_abi),
+    serde(rename_all = "camelCase")
 )]
 #[derive(Debug, Default)]
 pub enum YtMediaType {
@@ -560,7 +568,8 @@ pub enum YtMediaType {
 #[cfg_attr(
     target_arch = "wasm32",
     derive(serde::Serialize, serde::Deserialize, tsify::Tsify),
-    tsify(into_wasm_abi, from_wasm_abi)
+    tsify(into_wasm_abi, from_wasm_abi),
+    serde(rename_all = "lowercase")
 )]
 #[derive(Debug, Default)]
 pub enum YtAgeLimit {
@@ -572,7 +581,8 @@ pub enum YtAgeLimit {
 #[cfg_attr(
     target_arch = "wasm32",
     derive(serde::Serialize, serde::Deserialize, tsify::Tsify),
-    tsify(into_wasm_abi, from_wasm_abi)
+    tsify(into_wasm_abi, from_wasm_abi),
+    serde(rename_all = "camelCase")
 )]
 #[derive(Debug)]
 pub struct YtThumbnail {
@@ -584,7 +594,8 @@ pub struct YtThumbnail {
 #[cfg_attr(
     target_arch = "wasm32",
     derive(serde::Serialize, serde::Deserialize, tsify::Tsify),
-    tsify(into_wasm_abi, from_wasm_abi)
+    tsify(into_wasm_abi, from_wasm_abi),
+    serde(rename_all = "camelCase")
 )]
 #[derive(Debug)]
 pub struct YtVideoInfo {
