@@ -348,6 +348,7 @@ impl ExtractorPlayerHandle for YtExtractor {
             let client = popped_client.as_str();
             let variant = popped_client.get_variant();
 
+            #[cfg(feature = "logging")]
             log::info!(
                 "Extracting player response from \"{}\" client's manifest.",
                 client

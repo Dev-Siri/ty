@@ -103,6 +103,7 @@ impl ExtractorApiHandle for YtExtractor {
         let api_url = format!("https://{}/youtubei/v1/{}", host_name, ep);
         let yt_url = Url::parse(api_url.as_str())?;
 
+        #[cfg(feature = "logging")]
         log::info!("Requesting YouTube API at {}", api_url);
 
         let http_client = reqwest::Client::new();

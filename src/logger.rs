@@ -55,6 +55,7 @@ where
         unsafe { std::env::set_var("RUST_LOG", format!("tydle={}", level_str)) };
 
         env_logger::init();
+        #[cfg(feature = "logging")]
         log::info!("Logging initialized at level: {}", level_str);
     });
 }

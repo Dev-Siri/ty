@@ -232,6 +232,7 @@ impl InfoExtractor for YtExtractor {
 
                 // Skip livestream.
                 if target_duration_sec.is_some() {
+                    #[cfg(feature = "logging")]
                     log::info!("Skipped a found livestream because livestreams are not supported.");
                     continue;
                 }

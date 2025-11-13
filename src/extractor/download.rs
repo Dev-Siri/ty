@@ -75,6 +75,8 @@ impl ExtractorDownloadHandle for YtExtractor {
 
     async fn download_player_url(&self, video_id: &VideoId) -> Result<Option<String>> {
         let formatted_url = Url::parse("https://www.youtube.com/iframe_api")?;
+
+        #[cfg(feature = "logging")]
         log::info!("Downloading player iFrame API {}", formatted_url);
 
         let iframe_webpage = self
@@ -112,7 +114,8 @@ impl ExtractorDownloadHandle for YtExtractor {
         webpage_client: &YtClient,
         video_id: &VideoId,
     ) -> Result<String> {
-        log::info!("Downloading webpage {}", webpage_url);
+        #[cfg(feature = "logging")]
+        log::info!("{}: Downloading webpage {}", video_id.as_str(), webpage_url);
         let mut webpage_request = self.http_client.get(webpage_url).query(&[
             ("bpctr", "9999999999"),
             ("has_verified", "1"),
