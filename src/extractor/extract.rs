@@ -185,6 +185,7 @@ impl InfoExtractor for YtExtractor {
             }
 
             for client in &unsupported_clients {
+                #[cfg(feature = "logging")]
                 log::warn!(
                     "Skipping client \"{}\" since it does not support cookies.",
                     client.as_str()
