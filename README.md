@@ -108,11 +108,11 @@ export async function GET({ params: { videoId } }) {
   try {
     const tydle = new Tydle();
     const streams = await tydle.fetchStreams(videoId);
-    const urlStreams = streams.filter((stream) => "URL" in stream.source);
+    const urlStreams = streams.filter((stream) => "url" in stream.source);
 
     // Since the streams are only accessible here,
     // you need to fetch the source URL here and send that video response back.
-    return fetch(urlStreams.source[0]);
+    return fetch("url" in urlStreams[0].source && urlStreams[0].source.url);
   } catch (err) {
     console.error(err);
     return error(500, "Failed to get video");
